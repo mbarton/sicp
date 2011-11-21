@@ -1,0 +1,87 @@
+Exercise 1.1:
+10
+12
+8
+3
+6
+NULL -> nothing is returned? a is now 3
+NULL -> nothing is returned? b is now 4
+19
+false (seems to be #f in racket)
+
+(if (and (> b a) (< b (* a b))) b a)
+3
+oops, is 4 because b=4 and b is less than 12 (a*b herp)
+
+(cond ((= a 4) 6) 
+      ((= b 4) (+ 6 7 a))
+      (else 25))
+16
+
+9
+nope. if returns first arg if true, second arg if false
+4 > 3 so returned is 4. 4 + 2 = 6 not 9 herp
+
+(* (cond ((> a b) a)
+         ((< a b) b)
+         (else -1))
+    (+ a 1))
+16
+
+Exercise 1.2:
+(/ (+ 5 4 (- 2 (- 3 (+ 6 (/ 4 5))))) (* 3 (- 6 2) (- 2 7)))
+
+Exercise 1.3:
+The two largest numbers satisfy the condition that they are larger than at least one of the others
+(define (sumsqtwo a b c) 
+	(+ (if (or (> a b) (> a c)) (* a a) 0)
+	   (if (or (> b a) (> b c)) (* b b) 0)
+	   (if (or (> c a) (> c b)) (* c c) 0)
+	)
+)
+
+Exercise 1.4:
+The test in the if works out the sign of b (+ve or -ve) and returns the operator required to produce
+a positive result from the the maths. To the user, this seems like we are doing (abs b)
+
+(define (a-plus-abs-b a b)
+  ((if (> b 0) + -) a b))
+
+eg
+(a-plus-abs-b 3 5)
+5 > 0 so return plus
+3 + 5 = 8
+
+(a-plus-abs-b 3 (- 5))
+-5 > 0 is false so return -
+3 - - 5 = 8 again. Magic!
+
+Passing around functions already and we're not even done with chapter 1!
+
+Exercise 1.5:
+As far as I can deduce, applicative order evaluation is kinda sorta eager evaluation and normal order is kinda sorta lazy evaluation. Although a quick look at the wikipedia and a quick rack of the brain back to Principles of Programming Langauges in CS bham indicates that it's all to do with what you pick to reduce first: left to right as much as possible with applicative order whereas normal order is always evaluating the outermost redex. My brain is rusty but I can convince myself that this means only evaluate what you really need *right now* by visualising the evaluation tree.
+
+In the example, there is a test for x being 0 in which case we just return 0. The definition up top is horrible and recursively defines p in terms of itself. In applicative order, both arguments to test are fully evaluated before the function itself is "called" (1) so we will attempt to work out the values that need to be assigned to x and y. This blows up in our face because y is the evil recursive definition from above, so we will keep on trying to evaluate that until I imagine we get a stack overflow.
+
+Normal order evaluation to the rescue! In this case x and y will just be substituted with the passed in code but not yet evaluated. This is good because when we get to the if we see that x == 0 and so we can short-circuit to returning 0 and never bother with what the value of y is because it doesn't matter for the particular computation we are doing. So we would return 0 quite happily and everyone goes home to hack on some Haskell!
+
+That was lots of words and I like words but here is the actual evaluation for those who like "rigour" or who hate walls of text!
+
+Applicative Order:
+
+(test 0 (p))
+(test 0 (p)) - via (define (p) (p))
+(test 0 (p))
+(test 0 (p)) and so on and so on ad infinitum
+
+And would you believe it it works, if you feed this into Dr Racket you get an infinite loop at 100% CPU. Although no stack overflow? This may be because it can tail call optimise it?
+
+Normal Order:
+
+(test 0 (p))
+(if (= 0 0) 0 (p))
+0
+
+Boom. I'm feeling lazy.
+
+(1) yes I know I mean applied but hey, hard to break the imperative habit!
